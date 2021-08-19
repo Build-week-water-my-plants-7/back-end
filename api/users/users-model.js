@@ -7,3 +7,13 @@ User.create = async (newUser) => {
         return;
     }
 };
+
+User.login = async (value) => {
+    let row = await sql.query(`SELECT * FROM user WHERE mobile = ? OR email = ?`, [value, value]);
+    if( row.length ) {
+        return row[0];
+    }
+    else {
+        throw new NotFoundError("User does not exist");
+    }
+};
