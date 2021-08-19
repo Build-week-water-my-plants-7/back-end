@@ -15,7 +15,7 @@ server.use(helmet());
 //Sets up the router
 // server.use("/api/auth", AuthRouter);
 // server.use("/api/users", PlantRouter);
-// server.use("/api/items", SpeciesRouter);
+// server.use("/api/species", SpeciesRouter);
 // server.use("/api/reviews", UserRouter);
 
 server.get("/", (req, res) => {
