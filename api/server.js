@@ -19,7 +19,7 @@ server.use(helmet());
 // server.use("/api/reviews", UserRouter);
 
 server.get("/", (req, res) => {
-  res.status(200).json({ message: process.env.MOTD });
+  res.status(200).json({ message: 'server is running!' });
 });
 
 server.use((err, req, res, next) => { // eslint-disable-line
