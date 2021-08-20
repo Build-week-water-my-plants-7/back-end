@@ -1,19 +1,19 @@
-User.create = async (newUser) => {
-    let insert = await sql.query("INSERT INTO user SET ?", newUser);
-    if( insert.insertId ) {
-        return insert.insertId;
-    }
-    else {
-        return;
-    }
+const db = require('../../data/dbConfig.js');
+
+const findBy = filter => {
+	return db('users').where(filter).first();
 };
 
-User.login = async (value) => {
-    let row = await sql.query(`SELECT * FROM user WHERE mobile = ? OR email = ?`, [value, value]);
-    if( row.length ) {
-        return row[0];
-    }
-    else {
-        throw new NotFoundError("User does not exist");
-    }
+const findById = id => {
+	return db('users').where({ id }).first();
 };
+
+async function addUser({ username, password }) {
+	const [user_id] = await db('users').insert({
+		username: username,
+		password: password
+	});
+	return findById(user_id);
+}
+
+module.exports = { findBy, findById, addUser }; 
