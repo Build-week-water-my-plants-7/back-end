@@ -1,4 +1,8 @@
-const db = require('../../data/dbConfig.js');
+const db = require('../../data/db-config');
+
+function find() {
+	return db("users");
+};
 
 const findBy = filter => {
 	return db('users').where(filter).first();
@@ -16,4 +20,24 @@ async function addUser({ username, password }) {
 	return findById(user_id);
 }
 
-module.exports = { findBy, findById, addUser }; 
+function updateProfile(id, changes) {
+	return db("users")
+	  .where("user_id", id)
+	  .update(changes)
+	  .then(() => {
+		return db("users").where("user_id", id).first();
+	  });
+  }
+
+  function remove(id) {
+	return db("users").where({ user_id: id }).del();
+  }
+
+module.exports = { 
+	find, 
+	findBy, 
+	findById, 
+	addUser, 
+	updateProfile, 
+	remove,
+}; 
