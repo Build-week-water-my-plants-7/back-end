@@ -1,33 +1,48 @@
-const config = require("../config/config");
+const { JWT_SECRET } = require("../secrets/index"); // use this secret!
 const jwt = require("jsonwebtoken");
+const Users = require("../users/users-model");
 
-exports.loggedIn = function (req, res, next) {
-    let token = req.header('Authorization');
-    if (!token) return res.status(401).send("Access Denied");
+const restricted = (req, res, next) => {
+  const token = req.headers.authorization;
 
-    try {
-        if (token.startsWith('Bearer ')) {
-            // Remove Bearer from string
-            token = token.slice(7, token.length).trimLeft();
-        }
-        const verified = jwt.verify(token, config.TOKEN_SECRET); 
-        if( verified.user_type_id === 2 ){ // Check authorization, 2 = Customer, 1 = Admin
-            let req_url = req.baseUrl+req.route.path;
-            if(req_url.includes("users/:id") && parseInt(req.params.id) !== verified.id){
-                return res.status(401).send("Unauthorized!");
-            }
-        }
-        req.user = verified;
+  if (!token) {
+    res.status(401).json({ message: "Token required" });
+  } else {
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+      if (err) {
+        res.status(401).json({ message: "Token invalid" });
+      } else {
+        req.decodedToken = decoded;
         next();
-    }
-    catch (err) {
-        res.status(400).send("Invalid Token");
-    }
-}
+      }
+    });
+  }
+};
 
-exports.adminOnly = async function (req, res, next) {
-    if( req.user.user_type_id === 2 ){
-        return res.status(401).send("Access Denied");
-    }  
+const checkUsernameExists = (req, res, next) => {
+  const { username } = req.body;
+  const exists = Users.findBy(username);
+  if (exists) {
     next();
-}
+  } else {
+    res.status(401).json({ message: "Invalid Credentials" });
+  }
+};
+
+const checkUser = (req, res, next) => {
+  const {username, password} = req.body
+ if(!username || !password){
+  res.status(400).json({ message: "username and password required" });
+ }else{
+     next()
+ }
+};
+
+
+
+
+module.exports = {
+  restricted,
+  checkUsernameExists,
+  checkUser
+};
