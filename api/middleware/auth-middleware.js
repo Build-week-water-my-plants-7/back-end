@@ -1,48 +1,87 @@
-const { JWT_SECRET } = require("../secrets/index"); // use this secret!
-const jwt = require("jsonwebtoken");
-const Users = require("../users/users-model");
+const { jwtSecret } = require('../secrets/index')
+const jwt = require('jsonwebtoken')
+const Users = require('../users/users-model')
+const db = require('../../data/db-config')
 
 const restricted = (req, res, next) => {
-  const token = req.headers.authorization;
+    try {
+        const token = req.headers.authorization.split(' ')[1]
+        if (token) {
+            jwt.verify(token, secrets.jwtSecret, (err, decodedToken) => {
+                if (err) {
+                    res.status(401).json({ you: "can't touch this" })
+                } else {
+                    req.decodedJwt = decodedToken
+                    console.log(req.decodedJwt)
+                    next()
+                }
+            })
+        } else {
+            throw new Error('invalid auth data')
+        }
+    } catch (err) {
+        res.status(401).json({ error: err.message })
+    }
+}
 
-  if (!token) {
-    res.status(401).json({ message: "Token required" });
-  } else {
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
-      if (err) {
-        res.status(401).json({ message: "Token invalid" });
-      } else {
-        req.decodedToken = decoded;
-        next();
-      }
-    });
-  }
-};
+async function checkForUsername(req, res, next) {
+    try {
+        const username = req.body.username
+        const user = await db
+            .select('username')
+            .from('users')
+            .where({ username })
+        console.log(user)
+        console.log(username)
+        if (user.length >= 1) {
+            res.status(422).json({ message: 'username taken' })
+        } else {
+            next()
+        }
+    } catch (err) {
+        next({
+            apiCode: 500,
+            apiError: 'error checking if username exists',
+            ...err
+        })
+    }
+}
 
-const checkUsernameExists = (req, res, next) => {
-  const { username } = req.body;
-  const exists = Users.findBy(username);
-  if (exists) {
-    next();
-  } else {
-    res.status(401).json({ message: "Invalid Credentials" });
-  }
-};
+async function checkUsernameExists(req, res, next) {
+    try {
+        const username = req.body.username
+        const user = await db
+            .select('username')
+            .from('users')
+            .where({ username })
+        if (user.length === 0) {
+            res.status(401).json({
+                message: 'username doesnt have an account'
+            })
+        } else {
+            next()
+        }
+    } catch (err) {
+        next({
+            apiCode: 500,
+            apiError: 'error checking if username exists',
+            ...err
+        })
+    }
+}
 
-const checkUser = (req, res, next) => {
-  const {username, password} = req.body
- if(!username || !password){
-  res.status(400).json({ message: "username and password required" });
- }else{
-     next()
- }
-};
-
-
-
+function requirePassword(req, res, next) {
+    const { password } = req.body
+    if (!password) {
+        res.status(401).json({ message: 'password required' })
+    } else {
+        next()
+    }
+}
 
 module.exports = {
-  restricted,
-  checkUsernameExists,
-  checkUser
-};
+    restricted,
+    checkForUsername,
+    checkUsernameExists,
+    requirePassword
+}
