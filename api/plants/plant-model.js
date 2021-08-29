@@ -1,33 +1,31 @@
-const db = require('../../data/db-config');
+const db = require('../../data/db-config')
 
-async function findAll() {
+// Find all plants
+const findAll = () => {
     return db('plants').orderBy('plants.id')
 }
-
-async function findById(id) {
-    return db('plants').where({id}).first();
+// Find plant by ID
+const findById = (id) => {
+    return db('plants').where({ id }).first()
 }
-
-async function add(plant) {
-   const [id] = await db('plants')
-   .returning('id')
-   .insert(plant)
-
-   return findById(id);
+// Add plant to DB
+const add = async (plant) => {
+    const [id] = await db('plants').returning('id').insert(plant)
+    return findById(id)
 }
-
-async function remove(id) {
-    return db('plants').where({id}).del();
+// Remove plant
+const remove = (id) => {
+    return db('plants').where({ id }).del()
 }
-
-async function update(id, changes) {
-   return db('plants').where({id}).update(changes);
+// Update plant
+const update = (id, changes) => {
+    return db('plants').where({ id }).update(changes)
 }
 
 module.exports = {
     findAll,
     findById,
     add,
-    update,
-    remove
+    remove,
+    update
 }

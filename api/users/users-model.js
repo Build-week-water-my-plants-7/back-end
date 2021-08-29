@@ -1,91 +1,88 @@
-const db = require("../../data/db-config");
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt')
+const db = require('../../data/db-config')
 
-async function findAll() {
-    return db.select("u.id", "u.username", "u.phone_number").from("users as u").orderBy("u.id");
-};
-
-async function findById(id) {
-    const res = await db.select("u.id", "u.username", "u.phone_number")
-    .from("users as u")
-    .where({id})
-    .first()
-
+// Find all users
+const findAll = () => {
+    return db
+        .select('u.id', 'u.username', 'u.phone_number')
+        .from('users as u')
+        .orderBy('u.id')
+}
+//Find user by ID
+const findById = async (id) => {
+    const user = await db
+        .select('u.id', 'u.username', 'u.phone_number')
+        .from('users as u')
+        .where({ id })
+        .first()
     const newObj = {
-        id: res.id,
-        username: res.username,
-        phone_number: res.phone_number,
-        plants: await findPlants(res.id)
+        id: user.id,
+        username: user.username,
+        phone_number: user.phone_number,
+        plants: await findUserPlants(user.id)
     }
-    return newObj;
+    return newObj
 }
-
-async function findBy(filter) {
-    return db("users").where(filter);
+// Find with filter
+const findByFilter = (filter) => {
+    return db('users').where(filter)
 }
-
-async function findPlants(user_id) {
-    const res = await db("plants as p")
-    .join("users_plants as up", "up.plant_id", "p.id")
-    .join("users as u", "u.id", "up.user_id")
-    .select("p.id", "p.nickname", "p.species", "p.h2o_frequency", "p.image")
-    .where({"up.user_id": user_id})
-    .groupBy("p.id")
-    .then(row => {
-        return row
-    });
-
-    return res;
+//Find users plants
+const findUserPlants = async (id) => {
+    const plants = await db('plants as p')
+        .join('users_plants as upl', 'upl.plant_id', 'p.id')
+        .join('users as u', 'u.id', 'upl.user_id')
+        .select('p.id', 'p.nickname', 'p.species', 'p.h2o_frequency', 'p.image')
+        .where({ 'upl.user_id': id })
+        .groupBy('p.id')
+        .then((row) => {
+            return row
+        })
+    return plants
 }
-
-async function addPlantToUser(userId, plantId) {
-    return db("users_plants")
-    .insert({user_id: userId, plant_id: plantId})
+// Add user
+const add = async (user) => {
+    const [id] = await db('users').returning('id').insert(user)
+    return findById(id)
 }
-
-async function add(user) {
-        const [id] = await db('users')
-        .returning('id')
-        .insert(user)
-        console.log(id)
-
-        return findById(id);
+// Add users plant
+const addUserPlant = (id, plantId) => {
+    return db('users_plants').insert({ user_id: id, plant_id: plantId })
 }
-
-async function update(id, changes) {
+// Update User
+const update = async (id, changes) => {
     const hash = bcrypt.hashSync(changes.password, 8)
-    changes.password = hash;
+    changes.password = hash
 
-    const [updatedId] = await db("users").where({id}).update({
-        username: changes.username,
-        phone_number: changes.phone_number,
-        password: changes.password
-    }).returning('id');
+    const [updatedId] = await db('users')
+        .where({ id: updatedId })
+        .update({
+            username: changes.username,
+            phone_number: changes.phone_number,
+            password: changes.password
+        })
+        .returning('id')
 
-    const updatedUser = await db('users').where({'id': updatedId}).first()
- 
-    // console.log(updatedUser)
+    const updated = await db('users').where({ id: updatedId }).first()
 
-    return updatedUser;
+    return updated
 }
-
-async function remove(id) {
-    return db("users").where({id}).del();
+// Remove User
+const remove = (id) => {
+    return db('users').where({ id }).del()
 }
-
-async function removePlantFromUser(userId, plantId) {
-    return db("users_plants")
-    .where({user_id: userId, plant_id: plantId})
-    .del();
+// Remove users plant
+const removeUserPlant = (id, plantId) => {
+    return db('users_plants').where({ user_id: id, plant_id: plantId }).del()
 }
 
 module.exports = {
     findAll,
     findById,
-    findBy,
+    findByFilter,
     add,
+    addUserPlant,
     update,
     remove,
-    removePlantFromUser,
-    addPlantToUser
+    removeUserPlant
 }

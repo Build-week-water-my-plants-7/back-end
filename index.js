@@ -1,7 +1,7 @@
-const server = require('./api/server');
+const server = require('./api/server')
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5500
 
 server.listen(port, () => {
-    console.log(`** server is listening on port:${port}`);
+  console.log(`Server live on port ${port}`)
 })
