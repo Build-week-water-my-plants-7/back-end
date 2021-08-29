@@ -1,33 +1,89 @@
-const config = require("../config/config");
-const jwt = require("jsonwebtoken");
+const { jwtSecret } = require('../secrets/index')
+const jwt = require('jsonwebtoken')
+const Users = require('../users/users-model')
+const db = require('../../data/db-config')
 
-exports.loggedIn = function (req, res, next) {
-    let token = req.header('Authorization');
-    if (!token) return res.status(401).send("Access Denied");
-
+const restricted = (req, res, next) => {
     try {
-        if (token.startsWith('Bearer ')) {
-            // Remove Bearer from string
-            token = token.slice(7, token.length).trimLeft();
+        const token = req.headers.authorization.split(' ')[1]
+
+        if (token) {
+            jwt.verify(token, secrets.jwtSecret, (err, decodedToken) => {
+                if (err) {
+                    res.status(401).json({ you: "can't touch this" })
+                } else {
+                    req.decodedJwt = decodedToken
+                    console.log(req.decodedJwt)
+                    next()
+                }
+            })
+        } else {
+            throw new Error('invalid auth data')
         }
-        const verified = jwt.verify(token, config.TOKEN_SECRET); 
-        if( verified.user_type_id === 2 ){ // Check authorization, 2 = Customer, 1 = Admin
-            let req_url = req.baseUrl+req.route.path;
-            if(req_url.includes("users/:id") && parseInt(req.params.id) !== verified.id){
-                return res.status(401).send("Unauthorized!");
-            }
-        }
-        req.user = verified;
-        next();
-    }
-    catch (err) {
-        res.status(400).send("Invalid Token");
+    } catch (err) {
+        res.status(401).json({ error: err.message })
     }
 }
 
-exports.adminOnly = async function (req, res, next) {
-    if( req.user.user_type_id === 2 ){
-        return res.status(401).send("Access Denied");
-    }  
-    next();
+async function checkUsernameForFree(req, res, next) {
+    try {
+        const username = req.body.username
+        const user = await db
+            .select('username')
+            .from('users')
+            .where({ username })
+        console.log(user)
+        console.log(username)
+        if (user.length >= 1) {
+            res.status(422).json({ message: 'Username taken!' })
+        } else {
+            next()
+        }
+    } catch (err) {
+        next({
+            apiCode: 500,
+            apiMessage: 'Error checking if username exists!',
+            ...err
+        })
+        // next(err)
+    }
+}
+
+async function checkUsernameExists(req, res, next) {
+    try {
+        const username = req.body.username
+        const user = await db
+            .select('username')
+            .from('users')
+            .where({ username })
+        if (user.length === 0) {
+            res.status(401).json({
+                message: 'Username does not have an account!'
+            })
+        } else {
+            next()
+        }
+    } catch (err) {
+        next({
+            apiCode: 500,
+            apiMessage: 'Error checking if username exists!',
+            ...err
+        })
+    }
+}
+
+function requirePassword(req, res, next) {
+    const { password } = req.body
+    if (!password) {
+        res.status(401).json({ message: 'Password is Required!' })
+    } else {
+        next()
+    }
+}
+
+module.exports = {
+    restricted,
+    checkUsernameForFree,
+    checkUsernameExists,
+    requirePassword
 }

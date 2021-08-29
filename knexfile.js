@@ -1,46 +1,57 @@
+
 // Update with your config settings.
-const devConfig = {
-  client: 'sqlite3',
-  useNullAsDefault: true,
-  migrations: {
-    directory: './data/migrations',
-  },
-  seeds: {
-    directory: './data/seeds',
-  },
-  //enables foreign keys
-  pool: {
-    afterCreate: (conn, done) => {
-      conn.run('PRAGMA foreign_keys = ON', done)
-    },
-  },
-}
-
-const testConfig = {
-  client: 'sqlite3',
-  useNullAsDefault: true,
-  migrations: {
-    directory: './data/migrations',
-  },
-  seeds: {
-    directory: './data/seeds',
-  },
-  // this enables foreign keys in SQLite
-  pool: {
-    afterCreate: (conn, done) => {
-      conn.run('PRAGMA foreign_keys = ON', done)
-    },
-  },
-}
-
+const dotenv = require('dotenv').config()
 module.exports = {
-  development: {
-    ...devConfig,
-    connection: { filename: './data/auth.db3' },
-    seeds: { directory: './data/seeds'}
-  },
-  testing: {
-    ...testConfig,
-    connection: { filename: './data/testing.db3' },
-  },
-};
+    development: {
+        client: 'sqlite3',
+        debug: true,
+        connection: {
+            filename: './data/users.db3'
+        },
+
+        useNullAsDefault: true,
+        migrations: { directory: './data/migrations' },
+        seeds: { directory: './data/seeds' },
+        pool: {
+            afterCreate: (conn, done) =>
+                conn.run('PRAGMA foreign_keys = ON', done)
+        }
+    },
+
+    staging: {
+        client: 'pg',
+        connection: {
+            connectionString: process.env.DATABASE_URL,
+            ssl: { rejectUnauthorized: false }
+        },
+        useNullAsDefault: true,
+        debug: true,
+        pool: {
+            min: 2,
+            max: 10
+        },
+        searchPath: ['knex', 'public'],
+        migrations: {
+            directory: './data/migrations'
+        },
+        acquireConnectionTimeout: 10000
+    },
+
+    production: {
+        client: 'pg',
+        connection: {
+            connectionString: process.env.DATABASE_URL,
+            ssl: { rejectUnauthorized: false }
+        },
+        pool: {
+            min: 2,
+            max: 10
+        },
+        searchPath: ['knex', 'public'],
+        useNullAsDefault: true,
+        migrations: {
+            directory: './data/migrations'
+        },
+        acquireConnectionTimeout: 10000
+    }
+}

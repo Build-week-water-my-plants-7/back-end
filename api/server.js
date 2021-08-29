@@ -1,32 +1,24 @@
-const express = require("express");
-const helmet = require("helmet");
-const cors = require("cors");
+const express = require('express')
+const cors = require('cors')
+const morgan = require('morgan')
 
-// const AuthRouter = require("./auth/auth-router");
-// const PlantRouter = require("./plants/plant-router");
-// const SpeciesRouter = require("./species/species-router");
-// const UserRouter = require("./users/users-routers");
+const userRouter = require('./users/users-router')
+const plantRouter = require('./plants/plant-router')
+const authRouter = require('./auth/auth-router')
+const errorHandler = require('./errorHandler')
+const router = require('./users/users-router')
+const { restricted } = require('./middleware/auth-middleware')
 
-const server = express();
-server.use(express.json());
-server.use(cors());
-server.use(helmet());
+const server = express()
 
-//Sets up the router
-// server.use("/api/auth", AuthRouter);
-// server.use("/api/users", PlantRouter);
-// server.use("/api/species", SpeciesRouter);
-// server.use("/api/reviews", UserRouter);
+server.use(cors())
+server.use(express.json())
+server.use(morgan('dev'))
 
-server.get("/", (req, res) => {
-  res.status(200).json({ message: 'server is running!' });
-});
+server.use(errorHandler)
 
-server.use((err, req, res, next) => { // eslint-disable-line
-    res.status(err.status || 500).json({
-      message: err.message,
-      stack: err.stack,
-    });
-  });
+server.use('/api/users', userRouter)
+server.use('/api/plants', plantRouter)
+server.use('/api/auth', authRouter)
 
-module.exports = server;
+module.exports = server
