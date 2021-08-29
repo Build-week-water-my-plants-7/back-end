@@ -1,20 +1,24 @@
-const express = require('express');
-const server = express();
-const cors = require('cors');
+const express = require('express')
+const cors = require('cors')
 const morgan = require('morgan')
-const errorHandler = require('./errorHandler');
-const usersRouter = require('../api/users/users-router');
-const plantsRouter = require('../api/plants/plant-router')
-const authRouter = require('./auth/auth-router');
 
-server.use(cors());
-server.use(express.json());
+const userRouter = require('./users/users-router')
+const plantRouter = require('./plants/plant-router')
+const authRouter = require('./auth/auth-router')
+const errorHandler = require('./errorHandler')
+const router = require('./users/users-router')
+const { restricted } = require('./middleware/auth-middleware')
+
+const server = express()
+
+server.use(cors())
+server.use(express.json())
 server.use(morgan('dev'))
 
-server.use('/api/users', usersRouter);
-server.use('/api/plants', plantsRouter)
-server.use('/api/auth', authRouter);
+server.use(errorHandler)
 
-server.use(errorHandler); 
+server.use('/api/users', userRouter)
+server.use('/api/plants', plantRouter)
+server.use('/api/auth', authRouter)
 
-module.exports = server;
+module.exports = server
