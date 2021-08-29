@@ -1,61 +1,41 @@
 
-exports.up = async function(knex) {
-    await knex.schema
-    .createTable("users", (users) => {
-      users.increments("user_id");
-      users.string("username", 200).notNullable();
-      users.string("password", 200).notNullable();
-      users.string("phoneNumber").notNullable().unique();
-      users.timestamps(true, true);
-    })
-    .createTable("species", (species) => {
-      species.increments("species_id");
-      species.string("species_name");
-    })
-    .createTable("intervals", (interval) => {
-      interval.increments("interval_id");
-      interval.string("interval_type_name");
-    })
-    .createTable("plants", (plants) => {
-      plants.increments("plant_id");
-      plants.string("nickname").notNullable().unique();
-      plants.integer("frequency").notNullable();
-      plants.string("time");
-      plants.string("date").notNullable();
-      plants.string("image");
-      plants.boolean("watered").notNullable();
-      plants
-        .integer("creator_id")
-        .unsigned()
-        .notNullable()
-        .references("user_id")
-        .inTable("users")
-        .onDelete("CASCADE")
-        .onUpdate("CASCADE");
-      plants
-        .integer("species_id")
-        .unsigned()
-        .notNullable()
-        .references("species_id")
-        .inTable("species")
-        .onDelete("CASCADE")
-        .onUpdate("CASCADE");
-      plants
-        .integer("interval_id")
-        .unsigned()
-        .notNullable()
-        .references("interval_id")
-        .inTable("intervals")
-        .onDelete("CASCADE")
-        .onUpdate("CASCADE");
-      plants.timestamps(true, true);
-    });
-};
+exports.up = function (knex) {
+  return knex.schema
+      .createTable('users', (tbl) => {
+          tbl.increments()
+          tbl.string('username').unique().notNullable()
+          tbl.string('password').notNullable()
+          tbl.string('phoneNumber')
+      })
+      .createTable('plants', (tbl) => {
+          tbl.increments()
+          tbl.string('nickname')
+          tbl.string('species')
+          tbl.string('h2o_frequency')
+          tbl.string('image')
+      })
+      .createTable('users_plants', (tbl) => {
+          tbl.increments()
+          tbl.integer('user_id')
+              .unsigned()
+              .notNullable()
+              .references('id')
+              .inTable('users')
+              .onDelete('CASCADE')
+              .onUpdate('CASCADE')
+          tbl.integer('plant_id')
+              .unsigned()
+              .notNullable()
+              .references('id')
+              .inTable('plants')
+              .onDelete('CASCADE')
+              .onUpdate('CASCADE')
+      })
+}
 
-exports.down = async function(knex) {
-    await knex.schema
-    .dropTableIfExists("plants")
-    .dropTableIfExists("intervals")
-    .dropTableIfExists("species")
-    .dropTableIfExists("users");
-};
+exports.down = function (knex) {
+  return knex.schema
+      .dropTableIfExists('users_plants')
+      .dropTableIfExists('plants')
+      .dropTableIfExists('users')
+}

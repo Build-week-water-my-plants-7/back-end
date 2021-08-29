@@ -1,78 +1,55 @@
-const express = require("express");
-const router = express.Router();
-const Plants = require("./plant-model");
+const router = require('express').Router()
+const Plant = require('./plant-model')
+const reqBody = require('../middleware/routeMiddleware')
 
+//Get plants
+router.get('/', async (req, res, next) => {
+    try {
+        const plant = await Plant.findPlants()
+        res.json(plant)
+    } catch (err) {
+        next({ apiCode: 500, apiError: 'error getting plants', ...err })
+    }
+})
 
-//get all plants in the database
-router.get("/", (req, res) => {
-  Plants.getAllPlants()
-    .then((plant) => {
-      res.status(201).json(plant);
-    })
-    .catch((err) => {
-      res.json(err);
-    });
-});
+// Get by ID
+router.get('/:id', async (req, res, next) => {
+    try {
+        const plant = await Plant(Plant.findById(req.params.id))
+        res.json(plant)
+    } catch (err) {
+        next({ apiCode: 500, apiError: 'error getting plant', ...err })
+    }
+})
 
-//Get a plant by it's particular id
-router.get("/:id", (req, res) => {
-  const plant_id = req.params.id;
-  Plants.findByPlantId(plant_id)
-    .then((plants) => {
-      res.status(201).json(plants);
-    })
-    .catch((err) => {
-      res.status(401).json(err);
-    });
-});
+// Add plant
+router.post('/', reqBody, async (req, res, next) => {
+    try {
+        let plant = await Plant.addPlant(req.body)
+        res.status(201).json(plant)
+    } catch (err) {
+        next({ apiCode: 500, apiError: 'error creating plant', ...err })
+    }
+})
 
-//get all of a user's plants
-router.get("/user/:id", (req, res) => {
-  const user_id = req.params.id;
-  Plants.findAllUsersPlants(user_id)
-    .then((plants) => {
-      res.status(201).json(plants);
-    })
-    .catch((err) => {
-      res.status(401).json(err);
-    });
-});
+// Update Plant
+router.put('/:id', reqBody, async (req, res, next) => {
+    try {
+        const plant = await Plant.updatePlant(req.params.id, req.body)
+        res.json(req.body)
+    } catch (err) {
+        next({ apiCode: 500, apiError: 'error pdating plant', ...err })
+    }
+})
 
-//Create a plant
-router.post("/", (req, res) => {
-  const newPlant = req.body;
-  Plants.insert(newPlant)
-    .then((plant) => {
-      res.status(201).json(plant);
-    })
-    .catch((err) => {
-      res.status(401).json("Error creating that plant", err.message);
-    });
-});
+// Delete Plant
+router.delete('/:id', async (req, res, next) => {
+    try {
+        const plant = await Plant.removePlant(req.params.id)
+        res.json({ message: `Plant removed with the ID of ${req.params.id}` })
+    } catch (err) {
+        next({ apiCode: 500, apiError: 'error deleting plant', ...err })
+    }
+})
 
-//update a plant
-router.put("/:id", (req, res) => {
-  const { id } = req.params;
-  const changes = req.body;
-  Plants.update(id, changes)
-    .then((plant) => {
-      res.status(200).json(plant);
-    })
-    .catch((err) => {
-      res.status(401).json(err);
-    });
-});
-
-//delete a plant
-router.delete("/:id", (req, res) => {
-  const { id } = req.params;
-  Plants.remove(id)
-    .then((plant) => {
-      res.status(201).json({ plant });
-    })
-    .catch((err) => {
-      res.status(400).json({ message: "Could not delete Plant" });
-    });
-});
-
-module.exports = router;
+module.exports = router
