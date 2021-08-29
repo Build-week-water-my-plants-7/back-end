@@ -1,22 +1,20 @@
-const express = require("express");
-const helmet = require("helmet");
-const cors = require("cors");
-
-const AuthRouter = require("./auth/auth-router");
-const PlantRouter = require("./plants/plant-router");
-const UserRouter = require("./users/users-router");
-const errorHandler = require('./errorHandler')
-
+const express = require('express');
 const server = express();
-server.use(express.json());
+const cors = require('cors');
+const morgan = require('morgan')
+const errorHandler = require('./errorHandler');
+const usersRouter = require('../api/users/users-router');
+const plantsRouter = require('../api/plants/plant-router')
+const authRouter = require('./auth/auth-router');
+
 server.use(cors());
-server.use(helmet());
+server.use(express.json());
+server.use(morgan('dev'))
 
-server.use(errorHandler)
+server.use('/api/users', usersRouter);
+server.use('/api/plants', plantsRouter)
+server.use('/api/auth', authRouter);
 
-//Sets up the router
-server.use("/api/auth", AuthRouter);
-server.use("/api/plants", PlantRouter);
-server.use("/api/users", UserRouter);
+server.use(errorHandler); 
 
 module.exports = server;

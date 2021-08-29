@@ -1,13 +1,13 @@
 module.exports = (err, req, res, next) => {
-    console.log('Express Error: ', err)
+    console.log('express error: ', err);
     if (err.apiCode && err.apiCode >= 400) {
-        err.apiError = err.apiError ? err.apiError : ''
+        // ensure that err.apiMessage exists so we don't throw an exception
+        // trying to return it.
+        err.apiMessage = err.apiMessage ? err.apiMessage : '';
         res.status(err.apiCode).json({
-            apiCode: err.apiCode,
-            apiError: err.apiError,
-            ...err
-        })
+            apiCode: err.apiCode, apiMessage: err.apiMessage, ...err
+        });
     } else {
-        next()
+        next();
     }
 }

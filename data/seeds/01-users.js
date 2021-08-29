@@ -6,23 +6,23 @@ exports.seed = function (knex) {
     .then(function () {
       // Inserts seed entries
       return knex("users").insert([
-        { id: 1, username: "test", phoneNumber: "1234567890", password: "1234" },
+        { id: 1, username: "test", phone_number: "1234567890", password: "1234" },
         {
           id: 2,
           username: "Chris",
-          phoneNumber: "2517067845",
+          phone_number: "2517067845",
           password: "1234",
         },
         {
           id: 3,
           username: "Stephanie",
-          phoneNumber: "8974545364",
+          phone_number: "8974545364",
           password: "1234",
         },
         {
           id: 4,
           username: "Stephen",
-          phoneNumber: "6453749070",
+          phone_number: "6453749070",
           password: "1234",
         },
       ]);
