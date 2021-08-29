@@ -17,6 +17,6 @@ exports.seed = function (knex) {
                   user_id: 3, 
                   plant_id: 3 
                 }
-            ])
-        })
-}
+            ]);
+        });
+};

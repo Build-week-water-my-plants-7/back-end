@@ -1,86 +1,91 @@
+const db = require("../../data/db-config");
 const bcrypt = require('bcrypt');
-const db = require('../../data/db-config');
 
-const find = () => {
-	return db
-		.select('u.id', 'u.username', 'u.phoneNumber')
-		.from('users as u')
-		.orderBy('u.id')
+async function findAll() {
+    return db.select("u.id", "u.username", "u.phone_number").from("users as u").orderBy("u.id");
 };
 
-const findBy = (filter) => {
-    return db('users').where(filter)
-}
+async function findById(id) {
+    const res = await db.select("u.id", "u.username", "u.phone_number")
+    .from("users as u")
+    .where({id})
+    .first()
 
-const findById = async (id) => {
-    const user = await db
-        .select('u.id', 'u.username', 'u.phoneNumber')
-        .from('users as u')
-        .where({ id })
-        .first()
     const newObj = {
-        id: user.id,
-        username: user.username,
-        phoneNumber: user.phoneNumber,
-        plants: await findPlants(user.id)
+        id: res.id,
+        username: res.username,
+        phone_number: res.phone_number,
+        plants: await findPlants(res.id)
     }
-    return newObj
+    return newObj;
 }
 
-const findPlants = async (id) => {
-    const plants = await db('plants as p')
-        .join('users_plants as upl', 'upl.plant_id', 'p.id')
-        .join('users as u', 'u.id', 'upl.user_id')
-        .select('p.id', 'p.nickname', 'p.species', 'p.h2o_frequency', 'p.image')
-        .where({ 'upl.user_id': id })
-        .groupBy('p.id')
-        .then((row) => {
-            return row
-        })
-    return plants
+async function findBy(filter) {
+    return db("users").where(filter);
 }
 
-const addUser = async (user) => {
-    const [id] = await db('users').returning('id').insert(user)
-    return findById(id)
+async function findPlants(user_id) {
+    const res = await db("plants as p")
+    .join("users_plants as up", "up.plant_id", "p.id")
+    .join("users as u", "u.id", "up.user_id")
+    .select("p.id", "p.nickname", "p.species", "p.h2o_frequency", "p.image")
+    .where({"up.user_id": user_id})
+    .groupBy("p.id")
+    .then(row => {
+        return row
+    });
+
+    return res;
 }
 
-const addPlants = (id, plantId) => {
-    return db('users_plants').insert({ user_id: id, plant_id: plantId })
+async function addPlantToUser(userId, plantId) {
+    return db("users_plants")
+    .insert({user_id: userId, plant_id: plantId})
 }
 
-const updateProfile = async (id, changes) => {
-    const hash = bcrypt.hashSync(changes.password, 8)
-    changes.password = hash
-    const [updatedId] = await db('users')
-        .where({ id: updatedId })
-        .update({
-            username: changes.username,
-            phone_number: changes.phoneNumber,
-            password: changes.password
-        })
+async function add(user) {
+        const [id] = await db('users')
         .returning('id')
-    const updated = await db('users').where({ id: updatedId }).first()
+        .insert(user)
+        console.log(id)
 
-    return updated
+        return findById(id);
 }
 
-const remove = (id) => {
-    return db('users').where({ id }).del()
+async function update(id, changes) {
+    const hash = bcrypt.hashSync(changes.password, 8)
+    changes.password = hash;
+
+    const [updatedId] = await db("users").where({id}).update({
+        username: changes.username,
+        phone_number: changes.phone_number,
+        password: changes.password
+    }).returning('id');
+
+    const updatedUser = await db('users').where({'id': updatedId}).first()
+ 
+    // console.log(updatedUser)
+
+    return updatedUser;
 }
 
-const removePlants = (id, plantId) => {
-    return db('users_plants').where({ user_id: id, plant_id: plantId }).del()
+async function remove(id) {
+    return db("users").where({id}).del();
 }
 
-module.exports = { 
-	find, 
-	findBy, 
-	findById, 
-	findPlants,
-	addUser, 
-	addPlants,
-	updateProfile, 
-	remove,
-	removePlants
-}; 
+async function removePlantFromUser(userId, plantId) {
+    return db("users_plants")
+    .where({user_id: userId, plant_id: plantId})
+    .del();
+}
+
+module.exports = {
+    findAll,
+    findById,
+    findBy,
+    add,
+    update,
+    remove,
+    removePlantFromUser,
+    addPlantToUser
+}
